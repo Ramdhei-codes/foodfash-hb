@@ -1,4 +1,3 @@
-cat > src/routes/orders.js << 'EOF'
 const express = require('express');
 const orderController = require('../controllers/orderController');
 const router = express.Router();
