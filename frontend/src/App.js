@@ -1,16 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
+
+const api = axios.create({
+  baseURL:
+    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) ||
+    process.env.REACT_APP_API_URL ||
+    'http://localhost:3001',
+});
 
 function App() {
   const restaurants = [
     { id: 1, name: 'Pizza Palace', description: 'Best pizza in town', rating: 4.5, delivery_time: 30 },
     { id: 2, name: 'Burger Barn', description: 'Gourmet burgers and fries', rating: 4.2, delivery_time: 25 },
     { id: 3, name: 'Taco Fiesta', description: 'Authentic Mexican cuisine', rating: 4.8, delivery_time: 35 },
-  ]
+  ];
 
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -19,10 +26,13 @@ function App() {
 
   const loadOrders = async () => {
     try {
-      const response = await axios.get('/api/orders/user/1');
+      setError(null);
+      const response = await api.get('/api/orders/user/1');
       setOrders(response.data);
-    } catch (error) {
-      console.error('Error loading orders:', error);
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message;
+      setError(`Failed to load orders: ${msg}`);
+      console.error('Error loading orders:', err);
     }
   };
 
@@ -43,16 +53,16 @@ function App() {
 
       console.log('Placing order:', orderData);
 
-      const response = await axios.post('/api/orders', orderData);
+      const response = await api.post('/api/orders', orderData);
 
       if (response.data.success) {
         alert(`Order placed successfully at ${restaurantName}!`);
-        loadOrders();
+        await loadOrders();
       }
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || error.message;
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message;
       setError(`Failed to place order: ${errorMessage}`);
-      console.error('Order error:', error);
+      console.error('Order error:', err);
     } finally {
       setLoading(false);
     }
@@ -146,7 +156,7 @@ function App() {
                     <strong>Order #{order.id}</strong>
                   </p>
                   <p>
-                    Status:{' '}
+                    Status{' '}
                     <span
                       style={{
                         padding: '4px 8px',
